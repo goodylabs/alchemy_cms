@@ -104,7 +104,7 @@ module Alchemy
     # @return NilClass
     #
     def load_page
-      @page ||= Page.contentpages.find_by(
+      @page ||= Language.current.pages.find_by(
         urlname: params[:urlname],
         language_code: params[:locale] || Language.current.code
       )
