@@ -887,7 +887,7 @@ module Alchemy
       let(:element_3) { create(:alchemy_element) }
 
       before do
-        page.create_public_version(page_id: page.id)
+        page.create_public_version
         page.public_version.elements << element_3
         page.public_version.elements << element_1
         page.public_version.elements << element_2
@@ -964,7 +964,7 @@ module Alchemy
     describe "#descendent_elements" do
       let!(:page) do
         page = create(:alchemy_page)
-        page.create_public_version!(page_id: page.id)
+        page.create_public_version
         page
       end
 
@@ -990,7 +990,7 @@ module Alchemy
     describe "#descendent_contents" do
       let!(:page) do
         page = create(:alchemy_page)
-        page.create_public_version!(page_id: page.id)
+        page.create_public_version
         page
       end
 
@@ -1156,7 +1156,7 @@ module Alchemy
     describe '#feed_elements' do
       let(:page) do
         page = create(:alchemy_page, :public, page_layout: 'news')
-        page.create_public_version!(page_id: page.id)
+        page.create_public_version
         page
       end
 
