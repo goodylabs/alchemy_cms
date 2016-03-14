@@ -867,6 +867,13 @@ module Alchemy
       end
     end
 
+    describe '#destroy' do
+      it 'removes all versions' do
+        news_page.destroy
+        expect(news_page.versions).to be_empty
+      end
+    end
+
     describe "#elements" do
       let(:page) { create(:alchemy_page) }
       let(:element_1) { create(:alchemy_element) }
