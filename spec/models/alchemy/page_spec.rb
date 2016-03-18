@@ -7,7 +7,7 @@ module Alchemy
     let(:rootpage)      { Page.root }
     let(:language)      { Language.default }
     let(:klingonian)    { create(:alchemy_language, :klingonian) }
-    let(:language_root) { create(:alchemy_page, :language_root) }
+    let(:language_root) { create(:alchemy_page, :public, :language_root) }
     let(:page)          { mock_model(Page, page_layout: 'foo') }
     let(:public_page)   { create(:alchemy_page, :public) }
     let(:news_page)     { create(:alchemy_page, :public, page_layout: 'news', do_not_autogenerate: false) }
@@ -186,28 +186,6 @@ module Alchemy
             page.urlname = 'my-testpage'
             page.save!
             expect(page.legacy_urls).to be_empty
-          end
-        end
-
-        context "public has changed" do
-          it "should update published_at" do
-            expect {
-              page.update_attributes!(public: true)
-            }.to change { page.read_attribute(:published_at) }
-          end
-
-          it "should not update already set published_at" do
-            page.update_attributes!(published_at: 2.weeks.ago)
-            expect {
-              page.update_attributes!(public: true)
-            }.to_not change { page.read_attribute(:published_at) }
-          end
-        end
-
-        context "public has not changed" do
-          it "should not update published_at" do
-            page.update_attributes!(name: 'New Name')
-            expect(page.read_attribute(:published_at)).to be_nil
           end
         end
 
@@ -487,7 +465,7 @@ module Alchemy
       end
 
       let!(:klingonian_lang_root) do
-        create :alchemy_page, :language_root, {
+        create :alchemy_page, :public, :language_root, {
           name: 'klingonian_lang_root',
           layoutpage: nil,
           language: klingonian
@@ -731,7 +709,7 @@ module Alchemy
 
     describe '.public_language_roots' do
       it "should return pages that public language roots" do
-        create(:alchemy_page, :public, name: 'First Public Child', parent_id: language_root.id, language: language)
+        create(:alchemy_page, :public, :language_root, name: 'Language root', language: language)
         expect(Page.public_language_roots.size).to eq(1)
       end
     end
@@ -892,13 +870,12 @@ module Alchemy
     end
 
     describe "#elements" do
-      let(:page) { create(:alchemy_page) }
+      let(:page) { create(:alchemy_page, :public) }
       let(:element_1) { create(:alchemy_element) }
       let(:element_2) { create(:alchemy_element) }
       let(:element_3) { create(:alchemy_element) }
 
       before do
-        page.publish!
         page.public_version.elements << element_3
         page.public_version.elements << element_1
         page.public_version.elements << element_2
@@ -973,11 +950,7 @@ module Alchemy
     end
 
     describe "#descendent_elements" do
-      let!(:page) do
-        page = create(:alchemy_page)
-        page.publish!
-        page
-      end
+      let!(:page) { create(:alchemy_page, :public) }
 
       let!(:element_1) do
         create(:alchemy_element, page_version: page.public_version)
@@ -999,11 +972,7 @@ module Alchemy
     end
 
     describe "#descendent_contents" do
-      let!(:page) do
-        page = create(:alchemy_page)
-        page.publish!
-        page
-      end
+      let!(:page) { create(:alchemy_page, :public) }
 
       let!(:element_1) do
         create :alchemy_element, :with_nestable_elements, :with_contents,
@@ -1166,9 +1135,7 @@ module Alchemy
 
     describe '#feed_elements' do
       let(:page) do
-        page = create(:alchemy_page, :public, page_layout: 'news')
-        page.publish!
-        page
+        create(:alchemy_page, :public, page_layout: 'news')
       end
 
       let(:news_element) do
@@ -1309,7 +1276,10 @@ module Alchemy
 
     describe '#first_public_child' do
       before do
-        create(:alchemy_page, name: "First child", language: language, public: false, parent_id: language_root.id)
+        create :alchemy_page,
+          name: "First child",
+          language: language,
+          parent_id: language_root.id
       end
 
       it "should return first_public_child" do
@@ -1455,7 +1425,7 @@ module Alchemy
       let(:center_page)     { create(:alchemy_page, :public, name: 'Center Page') }
       let(:next_page)       { create(:alchemy_page, :public, name: 'Next Page') }
       let(:non_public_page) { create(:alchemy_page, name: 'Not public Page') }
-      let(:restricted_page) { create(:alchemy_page, :restricted, public: true) }
+      let(:restricted_page) { create(:alchemy_page, :public, :restricted) }
 
       before do
         public_page
@@ -1520,17 +1490,14 @@ module Alchemy
     end
 
     describe '#publish!' do
-      let!(:page) { create(:alchemy_page, public: false) }
+      let!(:page) { create(:alchemy_page) }
       let!(:current_time) { Time.now }
 
       before do
         allow(Time).to receive(:now).and_return(current_time)
-        page.publish!
       end
 
-      it "sets public attribute to true" do
-        expect(page.public).to eq(true)
-      end
+      subject! { page.publish! }
 
       it "sets published_at attribute to current time" do
         expect(page.published_at).to eq(current_time)
@@ -1937,11 +1904,18 @@ module Alchemy
     end
 
     context 'page status methods' do
-      let(:page) { build(:alchemy_page, public: true, visible: true, restricted: false, locked: false) }
+      let(:page) do
+        build_stubbed(:alchemy_page, :public, visible: true, restricted: false, locked: false)
+      end
 
       describe '#status' do
         it "returns a combined status hash" do
-          expect(page.status).to eq({public: true, visible: true, restricted: false, locked: false})
+          expect(page.status).to eq(
+            public: true,
+            visible: true,
+            restricted: false,
+            locked: false
+          )
         end
       end
 
@@ -2142,6 +2116,22 @@ module Alchemy
 
       it "returns a partial renderer compatible name" do
         expect(page.layout_partial_name).to eq('standard_page')
+      end
+    end
+
+    describe '#public?' do
+      let(:page) { build_stubbed(:alchemy_page) }
+
+      subject { page.public? }
+
+      context "when public version is present" do
+        before { page.publish! }
+
+        it { is_expected.to be(true) }
+      end
+
+      context "when public version is missing" do
+        it { is_expected.to be(false) }
       end
     end
 
