@@ -117,10 +117,14 @@ module Alchemy
     #
     def picture_params(options = {})
       return {} if picture.nil?
+
+      default_format = picture.image_file.format
+      default_format = Config.get(:image_output_format) if default_format.downcase != "gif"
+
       params = {
         id: picture.id,
         name: picture.urlname,
-        format: Config.get(:image_output_format)
+        format: default_format
       }.merge(options)
       if crop_from.present? && crop_size.present?
         params = {
