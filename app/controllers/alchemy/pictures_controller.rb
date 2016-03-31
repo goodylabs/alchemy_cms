@@ -49,16 +49,13 @@ module Alchemy
       request.session_options[:skip] = true
       ALLOWED_IMAGE_TYPES.each do |type|
         format.send(type) do
-          options = []
           if type == 'jpeg'
             quality = params[:quality] || Config.get(:output_image_jpg_quality)
-            options << "-quality #{quality}"
+            image = image.encode(type, "-quality #{quality}")
+          else
+            image = image.encode(type)
           end
-          # Flatten animated gifs, only if converting to a different format.
-          if type != "gif" && image.ext == 'gif'
-            options << "-flatten"
-          end
-          render text: image.encode(type, options.join(' ')).data
+          render text: image.data
         end
       end
     end
