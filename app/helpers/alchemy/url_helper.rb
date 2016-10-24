@@ -44,7 +44,7 @@ module Alchemy
       url_params = {
         :id => picture.id,
         :name => picture.urlname,
-        :format => configuration(:image_output_format),
+        :format => picture.image_file.format == "gif" ? "gif" : configuration(:image_output_format),
         :sh => picture.security_token(optional_params)
       }
       url_params.update(optional_params.update({:crop => optional_params[:crop] ? 'crop' : nil}))
