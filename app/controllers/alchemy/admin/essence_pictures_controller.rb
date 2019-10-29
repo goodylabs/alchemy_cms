@@ -112,7 +112,7 @@ module Alchemy
       end
 
       def essence_picture_params
-        params.require(:essence_picture).permit(:alt_tag, :caption, :css_class, :render_size, :title, :crop_from, :crop_size)
+        params.require(:essence_picture).permit(:alt_tag, :caption, :css_class, :render_size, :title, :crop_from, :crop_size, :link)
       end
 
     end

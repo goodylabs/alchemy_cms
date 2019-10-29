@@ -4,6 +4,7 @@
   <%= f.input :caption, as: @options[:caption_as_textarea] ? 'text' : 'string' %>
   <%= f.input :title %>
   <%= f.input :alt_tag %>
+  <%= f.input :link %>
   <%- if @options[:sizes].present? -%>
     <%= f.input :render_size,
       collection: [[_t('Layout default'), @options[:image_size]]] + @options[:sizes].to_a,
